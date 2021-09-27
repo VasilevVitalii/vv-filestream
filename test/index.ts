@@ -1,84 +1,69 @@
 import * as lib from '../src'
 import * as path from 'path'
-import { setInterval } from 'timers'
+import * as fs from 'fs'
 
-// const full_file_name_bad = path.join('a:/111.txt')
-// const full_file_name_good = path.join(__dirname, '..', '..', 'test', 'test.json')
+const full_file_name_bad = 'a:/bad_file.json'
+const full_file_name_good = path.join(__dirname, '..', '..', 'test', 'good_file.json')
 
-const tests = [
-    {
-        title: 'Create file with bad name',
-        options: {fullFileName: 'a:/test1.json'} as lib.TypeWriteStreamOptions,
-        write_data: [] as string[],
-        result: {
-            error: undefined,
-            result: undefined as lib.TypeCallbackResult,
-        },
-        check: {
-            need_error: true,
-            need_result: false,
-            need_file: false
-        },
-        closed: false,
-        printed: false
-        //check: {file_exists: false}},
-    // {key: '2', options: {fullFileName: path.join(__dirname, '..', '..', 'test', 'test2.json')} as lib.TypeWriteStreamOptions, result: undefined as lib.TypeCallbackResult, check: {file_exists: false}},
-    // {key: '3', options: {fullFileName: path.join(__dirname, '..', '..', 'test', 'test3.json')} as lib.TypeWriteStreamOptions, check: {file_exists: true}},
-    }
+const data_good = [
+    {aaaa: 1},
+    {aaaa: 2},
+    {aaaa: 3},
 ]
 
-tests.forEach(t => {
-    const stream = new lib.WriteStream(t.options)
-    stream.onClose((error, result) => {
-        t.result.error = error
-        t.result.result = result
-        t.closed = true
-    })
-    t.write_data.forEach(data => {
-        stream.write(data)
-    })
-    stream.close()
-})
-
-setInterval(() => {
-    if (tests.every(f => f.printed)) {
+const stream = new lib.WriteStream (
+    {prefix: '[\n', suffix: ']'}
+)
+stream.onClose(results => {
+    if (results.length !== 2) {
+        console.warn(`TEST ERROR - results.length !== 2`)
         process.exit()
     }
-    tests.filter(f => f.closed && !f.printed).forEach(t => {
-        t.printed = true
-        if (t.check.need_error && !t.result.error) {
-            console.warn(`"${t.title}": error - t.check.need_error && !t.result.error`)
-            return
-        }
-        if (!t.check.need_error && t.result.error) {
-            console.warn(`"${t.title}": error - !t.check.need_error && t.result.error`)
-            return
-        }
+    const fnd_bad = results.find(f => f.fullFileName === full_file_name_bad)
+    if (!fnd_bad) {
+        console.warn(`TEST ERROR - !fnd_bad`)
+        process.exit()
+    }
+    if (!fnd_bad.error) {
+        console.warn(`TEST ERROR - !fnd_bad.error`)
+        process.exit()
+    }
+    const fnd_good = results.find(f => f.fullFileName === full_file_name_good)
+    if (!fnd_good) {
+        console.warn(`TEST ERROR - !fnd_good`)
+        process.exit()
+    }
+    if (fnd_good.error) {
+        console.warn(`TEST ERROR - fnd_good.error`)
+        process.exit()
+    }
 
+    let raw_good = ''
+    try {
+        raw_good = fs.readFileSync(full_file_name_good, 'utf8')
+    } catch (error) {
+        console.warn(`TEST ERROR - in read file ${full_file_name_good} - ${(error as Error).message} `)
+    }
 
-        console.log(`"${t.title}": passed`)
+    let json_good = undefined
+    try {
+        json_good = JSON.parse(raw_good)
+    } catch (error) {
+        console.warn(`TEST ERROR - in parse file raw_good - ${(error as Error).message} `)
+    }
+
+    //console.log(json_good)
+
+    results.forEach(r => {
+        console.log(`${r.fullFileName}   ${r.error?.message}`)
     })
-}, 1000)
+})
 
-// const stream_bad = new lib.WriteStream({fullFileName: full_file_name_bad})
-// stream_bad.onClose((error, result) => {
-//     console.log(error)
-//     console.log(result)
-// })
-// stream_bad.close()
-
-// const stream_good = new lib.WriteStream({fullFileName: full_file_name_good})
-// stream_good.onClose((error, result) => {
-//     console.log(error)
-//     console.log(result)
-// })
-// stream_good.close()
-
-
-// bad_file.onClose((error, result) => {
-//     console.log(error)
-//     console.log(result)
-// })
-// bad_file.create()
-
+stream.write({fullFileName: full_file_name_bad, data: 'text1'})
+stream.write({fullFileName: full_file_name_good, data: data_good[0] '{"aaa": "1111"},\n' })
+stream.write({fullFileName: full_file_name_bad, data: 'text2'})
+stream.write({fullFileName: full_file_name_bad, data: 'text3'})
+stream.write({fullFileName: full_file_name_good, data: '{"aaa": "2222"},\n' })
+stream.write({fullFileName: full_file_name_good, data: '{"aaa": "3333"},\n' })
+stream.close()
 

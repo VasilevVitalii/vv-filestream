@@ -12,101 +12,116 @@ export type TypeWrite = {
     data: string
 }
 
+export type TypeResult = {
+    fullFileName: string,
+    error: Error
+}
+
 type TypeStream = {
     fullFileName: string,
     stream: fs.WriteStream,
     buzy: boolean
     error: Error
+    queue: string[]
 }
 
 export class WriteStream {
     private options: TypeWriteStreamOptions
-
     private streams: TypeStream[]
-
-    private queue: TypeWrite[]
-
     private closed: boolean
+    private callbacl_onClose: (results: TypeResult[]) => void
 
     constructor(options: TypeWriteStreamOptions) {
         this.options = options
         this.closed = false
-        this.queue = []
+        this.streams = []
         this.timer()
     }
 
-    write(options: TypeWrite): void {
-        if (this.closed === true) return
-        this.queue.push(options)
+    write(data: TypeWrite): void {
+        if (this.closed) return
+        let stream = this.streams.find(f => f.fullFileName === data.fullFileName)
+        if (stream) {
+            stream.queue.push(data.data)
+        } else {
+            stream = {
+                fullFileName: data.fullFileName,
+                stream: undefined,
+                buzy: false,
+                error: undefined,
+                queue: this.options.prefix ? [this.options.prefix, data.data] : [data.data]
+            }
+            try {
+                const writeStream = fs.createWriteStream(data.fullFileName, 'utf8')
+                writeStream.on('error', error => {
+                    if (!stream.error && error !== undefined && error !== null) stream.error = error
+                    stream.buzy = false
+                })
+                stream.stream = writeStream
+            } catch (error) {
+                stream.error = error as Error
+            }
+            this.streams.push(stream)
+        }
     }
 
     close() {
+        if (this.options.suffix) {
+            this.streams.forEach(stream => { stream.queue.push(this.options.suffix) })
+        }
         this.closed = true
     }
 
-    onClose() {
-
+    onClose(callback: (results: TypeResult[]) => void) {
+        this.callbacl_onClose = callback
     }
 
     private timer() {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this
-        setTimeout(function tick() {
-            if (self.queue.length <= 0) {
-                if (self.closed === false) {
-                    setTimeout(tick, 100)
-                    return
+        let timer = setTimeout(function tick() {
+            if (self.closed && !self.streams.some(f => f.buzy || (f.queue.length > 0 && !f.error))) {
+                self.destroyStreams()
+                if (self.callbacl_onClose) {
+                    self.callbacl_onClose(self.streams.map(m => { return {fullFileName: m.fullFileName, error: m.error} }))
                 }
-                //TODO closed!
+                return
             }
 
+            let find_for_write = false
+            self.streams.forEach(stream => {
+                if (stream.error || stream.buzy || stream.queue.length <= 0) return
+                stream.buzy = true
+                stream.stream.write(stream.queue.shift(), 'utf8', error => {
+                    if (!stream.error && error !== undefined && error !== null) stream.error = error
+                    stream.buzy = false
+                })
+                find_for_write = true
+            })
 
-            setTimeout(tick, 0)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            timer = setTimeout(tick, find_for_write ? 10 : 100)
         })
     }
 
-    private writeWizard (data: TypeWrite, callback: () => void) {
-        let stream = this.streams.find(f => f.fullFileName === data.fullFileName)
-        if (!stream) {
-            stream = {
-                fullFileName: data.fullFileName,
-                stream: fs.createWriteStream(data.fullFileName, 'utf8'),
-                buzy: false,
-                error: undefined
-            }
-            stream.stream.on('error', error => {
-                if (!stream.error) stream.error = error
-            })
-            this.streams.push(stream)
-            if (this.options.prefix) {
-                this.writeCore(stream, this.options.prefix, () => {
-                    this.writeWizard(data, callback)
-                })
-                return
-            }
-        }
-        this.writeCore(stream, data.data, callback)
-    }
-
-    private writeCore(stream: TypeStream, data: string, callback: () => void) {
-        if (stream.error) {
-            callback()
-            return
-        }
-        if (stream.buzy) {
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
-            const self = this
-            setTimeout(() => {
-                self.writeCore (stream, data, callback)
-            }, 100)
-            return
-        }
-
-        stream.buzy = true
-        stream.stream.write(data, 'utf8', error => {
-            if (!stream.error) stream.error = error
-            stream.buzy = false
-            callback()
+    private destroyStreams(): void {
+        this.streams.forEach(stream => {
+            try {
+                stream.queue = undefined
+            // eslint-disable-next-line no-empty
+            } catch (error) {}
+            try {
+                stream.stream.close()
+            // eslint-disable-next-line no-empty
+            } catch (error) {}
+            try {
+                stream.stream.destroy()
+            // eslint-disable-next-line no-empty
+            } catch (error) {}
+            try {
+                stream.stream = undefined
+            // eslint-disable-next-line no-empty
+            } catch (error) {}
         })
     }
 }
