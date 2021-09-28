@@ -6,7 +6,7 @@ type TypeStream = {
     stream: fs.WriteStream,
     buzy: boolean
     error: Error
-    queue: string[]
+    queue: (string | any)[]
 }
 
 export class WriteStream {
@@ -76,7 +76,7 @@ export class WriteStream {
             self.streams.forEach(stream => {
                 if (stream.error || stream.buzy || stream.queue.length <= 0) return
                 stream.buzy = true
-                stream.stream.write(stream.queue.shift(), 'utf8', error => {
+                stream.stream.write(self.getDataString(stream.queue.shift(), true), 'utf8', error => {
                     if (!stream.error && error !== undefined && error !== null) stream.error = error
                     stream.buzy = false
                 })
@@ -86,6 +86,24 @@ export class WriteStream {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             timer = setTimeout(tick, find_for_write ? 10 : 100)
         })
+    }
+
+    private getDataString(data: (string | any), root: boolean): string {
+        if (Array.isArray(data) && root) {
+            return data.map(m => { return this.getDataString(m, false) }).join('')
+        }
+        const t = typeof data
+        if (t === 'string') {
+            return data
+        } else if (t === 'object') {
+            return JSON.stringify(data).concat(',\n')
+        } else {
+            try {
+                return (data as string).toString()
+            } catch (error) {
+                return ''
+            }
+        }
     }
 
     private destroyStreams(): void {

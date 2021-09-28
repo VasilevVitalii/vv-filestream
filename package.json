@@ -1,6 +1,6 @@
 {
     "name": "vv-filestream",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "write to file stream",
     "main": "dist/src/index.js",
     "scripts": {

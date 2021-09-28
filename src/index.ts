@@ -9,7 +9,7 @@ export type TypeWriteStreamOptions = {
 
 export type TypeWrite = {
     fullFileName: string,
-    data: string
+    data: string | any
 }
 
 export type TypeResult = {
