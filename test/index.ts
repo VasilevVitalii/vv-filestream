@@ -11,7 +11,7 @@ const data_good = [
     {aaaa: 3},
 ]
 
-const stream = new lib.WriteStream (
+const stream = lib.createWriteStream (
     {prefix: '[\n', suffix: ']'}
 )
 stream.onClose(results => {
@@ -43,27 +43,30 @@ stream.onClose(results => {
         raw_good = fs.readFileSync(full_file_name_good, 'utf8')
     } catch (error) {
         console.warn(`TEST ERROR - in read file ${full_file_name_good} - ${(error as Error).message} `)
+        process.exit()
     }
 
     let json_good = undefined
     try {
         json_good = JSON.parse(raw_good)
     } catch (error) {
-        console.warn(`TEST ERROR - in parse file raw_good - ${(error as Error).message} `)
+        console.warn(`TEST ERROR - in parse file raw_good - ${(error as Error).message}`)
+        process.exit()
     }
 
-    //console.log(json_good)
+    if (JSON.stringify(data_good) !== JSON.stringify(json_good)) {
+        console.warn(`TEST ERROR - JSON.stringify(data_good) !== JSON.stringify(json_good)`)
+        process.exit()
+    }
 
-    results.forEach(r => {
-        console.log(`${r.fullFileName}   ${r.error?.message}`)
-    })
+    console.log('TEST PASSED')
 })
 
 stream.write({fullFileName: full_file_name_bad, data: 'text1'})
-stream.write({fullFileName: full_file_name_good, data: data_good[0] '{"aaa": "1111"},\n' })
+stream.write({fullFileName: full_file_name_good, data: JSON.stringify(data_good[0]).concat(',\n')})
 stream.write({fullFileName: full_file_name_bad, data: 'text2'})
 stream.write({fullFileName: full_file_name_bad, data: 'text3'})
-stream.write({fullFileName: full_file_name_good, data: '{"aaa": "2222"},\n' })
-stream.write({fullFileName: full_file_name_good, data: '{"aaa": "3333"},\n' })
+stream.write({fullFileName: full_file_name_good, data: JSON.stringify(data_good[1]).concat(',\n') })
+stream.write({fullFileName: full_file_name_good, data: JSON.stringify(data_good[2]).concat('\n') })
 stream.close()
 
