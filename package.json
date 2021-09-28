@@ -1,8 +1,8 @@
 {
     "name": "vv-filestream",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "write to file stream",
-    "main": "index.js",
+    "main": "dist/src/index.js",
     "scripts": {
         "build": "tsc",
         "test": "node ./dist/test/index.js"
