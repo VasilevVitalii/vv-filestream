@@ -16,13 +16,8 @@ const path = require('path')
 const fs = require('fs')
 const fileNameBad = 'a:/bad.json'
 const fileNameGood = path.join(__dirname, 'good.json')
-const data = [
-    {aaaa: 1, bbbb: 2},
-    {aaaa: 2, bbbb: 2},
-    {aaaa: 3, bbbb: 3},
-    {aaaa: 4, bbbb: 4},
-    {aaaa: 5, bbbb: 5},
-]
+const data1 = [{aaaa: 1},{aaaa: 2},{aaaa: 3}]
+const data2 = [{aaaa: 1, bbbb: 1},{aaaa: 2, bbbb: 2},{aaaa: 3, bbbb: 3},{aaaa: 4, bbbb: 4},{aaaa: 5, bbbb: 5}]
 const vvfs = require('vv-filestream').createWriteStream({prefix: '[\n', suffix: '{}\n]'})
 vvfs.onClose(result => {
     result.forEach(f => {
@@ -35,10 +30,10 @@ vvfs.onClose(result => {
         }
     })
 })
-vvfs.write({fullFileName: fileNameBad, data: data.slice(0, 2)})
-vvfs.write({fullFileName: fileNameGood, data: data.slice(0, 2)})
-vvfs.write({fullFileName: fileNameBad, data: data.slice(2, 5)})
-vvfs.write({fullFileName: fileNameGood, data: data.slice(2, 5)})
+vvfs.write({fullFileName: fileNameBad, data: data1.slice(0, 2)})
+vvfs.write({fullFileName: fileNameGood, data: data2.slice(0, 2)})
+vvfs.write({fullFileName: fileNameBad, data: data1.slice(2, 5)})
+vvfs.write({fullFileName: fileNameGood, data: data2.slice(2, 5)})
 vvfs.close()
 ```
 ### note for result
