@@ -38,17 +38,19 @@ export class WriteStream {
                 error: undefined,
                 queue: this.options.prefix ? [this.options.prefix, data.data] : [data.data]
             }
-            try {
-                const writeStream = fs.createWriteStream(data.fullFileName, 'utf8')
-                writeStream.on('error', error => {
-                    if (!stream.error && error !== undefined && error !== null) stream.error = error
-                    stream.buzy = false
-                })
-                stream.stream = writeStream
-            } catch (error) {
-                stream.error = error as Error
-            }
             this.streams.push(stream)
+            this.ensureDir(data.fullFileName, () => {
+                try {
+                    const writeStream = fs.createWriteStream(data.fullFileName, 'utf8')
+                    writeStream.on('error', error => {
+                        if (!stream.error && error !== undefined && error !== null) stream.error = error
+                        stream.buzy = false
+                    })
+                    stream.stream = writeStream
+                } catch (error) {
+                    stream.error = error as Error
+                }
+            })
         }
     }
 
@@ -76,16 +78,14 @@ export class WriteStream {
             }
 
             let find_for_write = false
-            self.streams.forEach(stream => {
+            self.streams.filter(f => f.stream).forEach(stream => {
                 if (stream.error || stream.buzy || stream.queue.length <= 0) return
                 stream.buzy = true
-                self.ensureDir(stream.fullFileName, () => {
-                    stream.stream.write(self.getDataString(stream.queue.shift(), true), 'utf8', error => {
-                        if (error !== undefined && error !== null && !stream.error) stream.error = error
-                        stream.buzy = false
-                    })
-                    find_for_write = true
+                stream.stream.write(self.getDataString(stream.queue.shift(), true), 'utf8', error => {
+                    if (error !== undefined && error !== null && !stream.error) stream.error = error
+                    stream.buzy = false
                 })
+                find_for_write = true
             })
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
