@@ -25,11 +25,14 @@ export class WriteStream {
         this.timer()
     }
 
-    write(data: TypeWrite): void {
+    write(data: TypeWrite, callback?: () => void): void {
         if (this.closed) return
         let stream = this.streams.find(f => f.fullFileName === data.fullFileName)
         if (stream) {
             stream.queue.push(data.data)
+            if (callback) {
+                callback()
+            }
         } else {
             stream = {
                 fullFileName: data.fullFileName,
@@ -47,6 +50,9 @@ export class WriteStream {
                         stream.buzy = false
                     })
                     stream.stream = writeStream
+                    if (callback) {
+                        callback()
+                    }
                 } catch (error) {
                     stream.error = error as Error
                 }
