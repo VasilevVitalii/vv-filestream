@@ -1,4 +1,5 @@
-import * as fs from 'fs'
+import * as path from 'path'
+import * as fs from 'fs-extra'
 import { TypeWriteStreamOptions, TypeWrite, TypeResult } from '.'
 
 type TypeStream = {
@@ -14,11 +15,13 @@ export class WriteStream {
     private streams: TypeStream[]
     private closed: boolean
     private callbacl_onClose: (results: TypeResult[]) => void
+    private ensureDirs: string[]
 
     constructor(options: TypeWriteStreamOptions) {
         this.options = options
         this.closed = false
         this.streams = []
+        this.ensureDirs = []
         this.timer()
     }
 
@@ -76,11 +79,13 @@ export class WriteStream {
             self.streams.forEach(stream => {
                 if (stream.error || stream.buzy || stream.queue.length <= 0) return
                 stream.buzy = true
-                stream.stream.write(self.getDataString(stream.queue.shift(), true), 'utf8', error => {
-                    if (!stream.error && error !== undefined && error !== null) stream.error = error
-                    stream.buzy = false
+                self.ensureDir(stream.fullFileName, () => {
+                    stream.stream.write(self.getDataString(stream.queue.shift(), true), 'utf8', error => {
+                        if (error !== undefined && error !== null && !stream.error) stream.error = error
+                        stream.buzy = false
+                    })
+                    find_for_write = true
                 })
-                find_for_write = true
             })
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -104,6 +109,18 @@ export class WriteStream {
                 return ''
             }
         }
+    }
+
+    private ensureDir(fullFileName: string, callback: () => void) {
+        const dir = path.parse(fullFileName).dir
+        if (this.ensureDirs.some(f => f === dir)) {
+            callback()
+            return
+        }
+        fs.ensureDir(dir, () => {
+            this.ensureDirs.push(dir)
+            callback()
+        })
     }
 
     private destroyStreams(): void {
