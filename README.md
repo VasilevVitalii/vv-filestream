@@ -26,7 +26,7 @@ vvfs.onClose(result => {
             console.log(`ERROR   ${f.error.message}`)
         } else {
             console.log('DATA')
-            console.log(JSON.parse(fs.readFileSync(fileNameGood, 'utf8')))
+            console.log(JSON.parse(fs.readFileSync(f.fullFileName, 'utf8')))
         }
     })
 })
