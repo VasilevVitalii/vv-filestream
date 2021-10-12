@@ -18,7 +18,7 @@ const fileNameBad = 'a:/bad.json'
 const fileNameGood = path.join(__dirname, 'good.json')
 const data1 = [{aaaa: 1},{aaaa: 2},{aaaa: 3}]
 const data2 = [{aaaa: 1, bbbb: 1},{aaaa: 2, bbbb: 2},{aaaa: 3, bbbb: 3},{aaaa: 4, bbbb: 4},{aaaa: 5, bbbb: 5}]
-const vvfs = require('vv-filestream').createWriteStream({prefix: '[\n', suffix: '{}\n]'})
+const vvfs = require('vv-filestream').Create({prefix: '[\n', suffix: '{}\n]'})
 vvfs.onClose(result => {
     result.forEach(f => {
         console.log(`file   ${f.fullFileName}`)
