@@ -8,11 +8,14 @@ type TStream = {
     buzy: boolean
     error: Error
     queue: (string | any)[]
+    mode: ('create' | 'append')
 }
 
 type TWrite = {
     fullFileName: string,
-    data: string | any
+    data: string | any,
+    //default - create
+    mode?: ('create' | 'append')
 }
 
 type TResult = {
@@ -44,17 +47,19 @@ export class WriteStream {
                 callback()
             }
         } else {
+            const mode = data.mode === 'append' ? 'append' : 'create'
             stream = {
                 fullFileName: data.fullFileName,
                 stream: undefined,
                 buzy: false,
                 error: undefined,
-                queue: this._options.prefix ? [this._options.prefix, data.data] : [data.data]
+                mode: mode,
+                queue: mode === 'create' && this._options.prefix ? [this._options.prefix, data.data] : [data.data]
             }
             this._streams.push(stream)
             this._ensureDir(data.fullFileName, () => {
                 try {
-                    const writeStream = fs.createWriteStream(data.fullFileName, 'utf8')
+                    const writeStream = fs.createWriteStream(data.fullFileName, {autoClose: true, encoding: 'utf8', flags: mode === 'append' ? 'a' : 'w'} )
                     writeStream.on('error', error => {
                         if (!stream.error && error !== undefined && error !== null) stream.error = error
                         stream.buzy = false
@@ -72,7 +77,7 @@ export class WriteStream {
 
     close() {
         if (this._options.suffix) {
-            this._streams.forEach(stream => { stream.queue.push(this._options.suffix) })
+            this._streams.filter(f => f.mode === 'create').forEach(stream => { stream.queue.push(this._options.suffix) })
         }
         this._closed = true
     }

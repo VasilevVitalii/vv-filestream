@@ -20,7 +20,7 @@
     "author": "Vitalii Vasilev",
     "license": "MIT",
     "devDependencies": {
-        "vv-template-nodebackend": "0.0.6",
+        "@types/fs-extra": "^9.0.13",
         "@types/node": "16.10.4",
         "@typescript-eslint/eslint-plugin": "5.0.0",
         "@typescript-eslint/parser": "5.0.0",
@@ -28,7 +28,8 @@
         "npm-check-updates": "11.8.5",
         "prettier": "2.4.1",
         "ts-node": "10.3.0",
-        "typescript": "4.4.3"
+        "typescript": "4.4.3",
+        "vv-template-nodebackend": "0.0.6"
     },
     "dependencies": {
         "fs-extra": "^10.0.0"
