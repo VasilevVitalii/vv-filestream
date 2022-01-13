@@ -1,6 +1,8 @@
 import * as lib from '../src'
 import * as path from 'path'
 import * as fs from 'fs'
+//import * as ml from './findMemoryLeak'
+//ml.Go()
 
 const fullFileNameAppend = path.join(__dirname, '..', '..', 'test', 'append.txt')
 const fullFileNameBad = 'a:/bad_file.json'
@@ -128,4 +130,3 @@ stream.write({fullFileName: fullFileNameGood2, data: [dataGood[1], dataGood[2]]}
 stream.write({fullFileName: fullFileNameAppend, data: 'line: 2\n', mode: 'append'})
 
 stream.close()
-

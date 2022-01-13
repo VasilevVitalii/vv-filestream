@@ -95,6 +95,9 @@ export class WriteStream {
                 if (self._callbackOnClose) {
                     self._callbackOnClose(self._streams.map(m => { return {fullFileName: m.fullFileName, error: m.error} }))
                 }
+                self._callbackOnClose = null
+                self._ensureDirs = null
+                self._streams = null
                 return
             }
 
@@ -147,7 +150,7 @@ export class WriteStream {
     private _destroyStreams(): void {
         this._streams.forEach(stream => {
             try {
-                stream.queue = undefined
+                stream.queue = null
             // eslint-disable-next-line no-empty
             } catch (error) {}
             try {
@@ -159,7 +162,7 @@ export class WriteStream {
             // eslint-disable-next-line no-empty
             } catch (error) {}
             try {
-                stream.stream = undefined
+                stream.stream = null
             // eslint-disable-next-line no-empty
             } catch (error) {}
         })
