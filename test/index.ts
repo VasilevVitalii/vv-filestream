@@ -21,7 +21,21 @@ const stream = lib.Create (
     {prefix: '[\n', suffix: '{}\n]'}
 )
 
-stream.onClose(results => {
+stream.write({fullFileName: fullFileNameAppend, data: 'line: 1\n', mode: 'append'})
+
+stream.write({fullFileName: fullFileNameBad, data: 'text1'})
+stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[0]).concat(',\n')})
+stream.write({fullFileName: fullFileNameGood2, data: dataGood[0]})
+stream.write({fullFileName: fullFileNameBad, data: 'text2'})
+stream.write({fullFileName: fullFileNameBad, data: 'text3'})
+
+stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[1]).concat(',\n') })
+stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[2]).concat(',\n') })
+stream.write({fullFileName: fullFileNameGood2, data: [dataGood[1], dataGood[2]]})
+
+stream.write({fullFileName: fullFileNameAppend, data: 'line: 2\n', mode: 'append'})
+
+stream.close(results => {
     if (results.length !== 4) {
         console.warn(`TEST ERROR - results.length !== 4`)
         process.exit()
@@ -114,19 +128,3 @@ stream.onClose(results => {
 
     console.log('TEST PASSED')
 })
-
-stream.write({fullFileName: fullFileNameAppend, data: 'line: 1\n', mode: 'append'})
-
-stream.write({fullFileName: fullFileNameBad, data: 'text1'})
-stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[0]).concat(',\n')})
-stream.write({fullFileName: fullFileNameGood2, data: dataGood[0]})
-stream.write({fullFileName: fullFileNameBad, data: 'text2'})
-stream.write({fullFileName: fullFileNameBad, data: 'text3'})
-
-stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[1]).concat(',\n') })
-stream.write({fullFileName: fullFileNameGood1, data: JSON.stringify(dataGood[2]).concat(',\n') })
-stream.write({fullFileName: fullFileNameGood2, data: [dataGood[1], dataGood[2]]})
-
-stream.write({fullFileName: fullFileNameAppend, data: 'line: 2\n', mode: 'append'})
-
-stream.close()

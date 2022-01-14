@@ -75,15 +75,12 @@ export class WriteStream {
         }
     }
 
-    close() {
+    close(callback?: (results: TResult[]) => void) {
+        this._callbackOnClose = callback
         if (this._options.suffix) {
             this._streams.filter(f => f.mode === 'create').forEach(stream => { stream.queue.push(this._options.suffix) })
         }
         this._closed = true
-    }
-
-    onClose(callback: (results: TResult[]) => void) {
-        this._callbackOnClose = callback
     }
 
     private _timer() {
